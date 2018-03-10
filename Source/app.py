@@ -6,12 +6,203 @@ import time
 import Tix
 try:
     # for Python2
-    from Tkinter import *   ## notice capitalized T in Tkinter 
+    from Tkinter import *   ## notice capitalized T in Tkinter
     #import Tkinter as tk
 except ImportError:
     # for Python3
     from tkinter import *
-    #import tkinter as tk   
+    #import tkinter as tk
+
+class InitialPage(Frame):
+    def __init__(self,master=None):
+        Frame.__init__(self,master)
+        self.parent = master
+        self.parent.title("Initial Page")
+        self.parent.configure(background="#2d3339")
+        self.centerWindow()
+
+        self.option_label=Label(master, text='CHOOSE TO SIGN-UP/LOGIN', font=('Lato',20), fg='#fff', background='#2d3339')
+        self.option_label.place(x=110,y=120)
+
+        self.openlogin_label = Button(master, text="Log In", font=("Lato", 18), borderwidth=0, command=self.openlogin, background='#c92d22', fg='#fff', height=1, width=10)
+        self.openlogin_label.place(x= 140, y = 300)
+
+        self.opensignup_label = Button(master, text="Sign Up", font=("Lato", 18), borderwidth=0, command=self.opensignup, background='#c92d22', fg='#fff', height=1, width=10)
+        self.opensignup_label.place(x= 340, y =300)
+
+        self.quit = Button(master, text="Quit", font=("Lato", 18), command=self.quit, borderwidth=0, background='#c92d22', fg='#fff', height=1, width=5)
+        self.quit.place(x= 480, y = 425)
+
+    def openlogin(self):
+        self.parent.destroy()
+        login = Tk()
+        framelogin = frame_login(login)
+        login.mainloop()
+
+    def opensignup(self):
+        self.parent.destroy()
+        signup = Tk()
+        framesignup = frame_signup(signup)
+        signup.mainloop()
+
+    def centerWindow(self):
+        w = self.parent.winfo_screenwidth()
+        h = self.parent.winfo_screenheight()
+        x = w/2 - 225
+        y = h/2 - 225
+
+        self.parent.geometry("%dx%d+%d+%d" %(600,500,x,y))
+        self.parent.resizable(0,0)
+    def quit(self):
+        self.parent.destroy()
+
+class frame_login(Frame):
+    def __init__(self,master=None):
+        Frame.__init__(self,master)
+        self.parent = master
+        self.parent.title("Login")
+        self.parent.configure(background="#2d3339")
+        #self.pack()
+        self.centerWindow()
+
+        self.login_label=Label(master, text='LOGIN SCREEN', font=('Lato',20), fg='#fff', background='#2d3339')
+        self.login_label.place(x=180,y=120)
+
+        self.user_label=Label(master, text="Enter your\nusername: ",  font=("Lato", 18), fg='#fff', background='#1EBBA6', width=20)
+        self.user_label.place(x=0,y=190)
+
+        self.pass_label=Label(master, text="Enter your\npassword: ",  font=("Lato", 18), fg='#fff', background='#16776A', width=20)
+        self.pass_label.place(x=0,y=250)
+
+        self.entry_user = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#16776A',fg='#fff')
+        self.entry_user.place(x=286, y=190)
+
+        self.entry_pass = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#1EBBA6',fg='#fff')
+        self.entry_pass.place(x=286, y=250)
+
+        self.login = Button(master, text="Log In", font=("Lato", 18), borderwidth=0, command=self.login, background='#c92d22', fg='#fff', height=1, width=10)
+        self.login.place(x= 140, y = 339)
+
+        self.back = Button(master, text="Back", font=("Lato", 18), borderwidth=0, command=self.back, background='#c92d22', fg='#fff', height=1, width=10)
+        self.back.place(x= 300, y = 339)
+
+    def back(self):
+        self.parent.destroy()
+        #InitialPage.__init__(self,master)
+        intialpage = Tk()
+        #InitialPage.__init__(self,master)
+        intial_page = InitialPage(initialpage)
+        intialpage.mainloop()
+    def centerWindow(self):
+        w = self.parent.winfo_screenwidth()
+        h = self.parent.winfo_screenheight()
+        x = w/2 - 225
+        y = h/2 - 225
+
+        self.parent.geometry("%dx%d+%d+%d" %(600,500,x,y))
+        self.parent.resizable(0,0)
+
+    def login(self):
+        global a
+        self.username=self.entry_user.get().lower()
+        a=self.username
+        self.password=self.entry_pass.get()
+        self.f=open('user.dat','rb')
+        try:
+            while True:
+                self.a=pickle.load(self.f)
+                self.usernames=self.a.keys()
+                if len(self.usernames)==1:
+                    self.entry_pass.delete(0,'end')
+        except EOFError:
+            pass
+        if self.password=='':
+            box.showerror('ERROR','Please enter a password before trying to login')
+        else:
+            if self.username.strip() not in self.usernames:
+                box.showerror('ERROR',"That username wasn't found in our directory.\nPlease sign up first")
+            if self.username.strip() in self.usernames:
+                if self.password==self.a[self.username.strip()]:
+                    self.parent.destroy()
+                    self.file=open(a+'.txt','a').close()
+                    self.mainscreen()
+                    main_page = Tk()
+                    mainframe = main_frame(main_page)
+                    main_page.mainloop()
+                else:
+                    box.showerror('ERROR','Incorrect username/password entered.\nPlease enter valid credentials')
+                    self.entry_pass.delete(0,'end')
+
+class frame_signup(Frame):
+    def __init__(self, master=None):
+        #def __init__(self,parent):
+        #.__init__(self,parent)
+        Frame.__init__(self,master)
+        self.parent = master
+        self.parent.title("Sign-up")
+        self.parent.configure(background="#2d3339")
+        self.centerWindow()
+
+        self.signup_label=Label(master, text='SIGN-UP SCREEN', font=('Lato',20), fg='#fff', background='#2d3339')
+        self.signup_label.place(x=180,y=120)
+
+        self.user_label=Label(master, text="Choose your\nusername: ",  font=("Lato", 18), fg='#fff', background='#1EBBA6', width=20)
+        self.user_label.place(x=0,y=190)
+
+        self.pass_label=Label(master, text="Choose your\npassword: ",  font=("Lato", 18), fg='#fff', background='#16776A', width=20)
+        self.pass_label.place(x=0,y=250)
+
+        self.entry_user = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#16776A',fg='#fff')
+        self.entry_user.place(x=286, y=190)
+
+        self.entry_pass = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#1EBBA6',fg='#fff')
+        self.entry_pass.place(x=286, y=250)
+
+        self.signup = Button(master, text="Sign Up", font=("Lato", 18), borderwidth=0, command=self.signup, background='#c92d22', fg='#fff', height=1, width=10)
+        self.signup.place(x= 300, y =340)
+    def centerWindow(self):
+        w = self.parent.winfo_screenwidth()
+        h = self.parent.winfo_screenheight()
+        x = w/2 - 225
+        y = h/2 - 225
+
+        self.parent.geometry("%dx%d+%d+%d" %(600,500,x,y))
+        self.parent.resizable(0,0)
+
+    def signup(self):
+        global a
+        self.username=self.entry_user.get().lower()
+        a=self.username
+        self.password=self.entry_pass.get()
+        self.f=open('user.dat','rb')
+        try:
+            while True:
+                self.collection=pickle.load(self.f)
+                self.usernames=self.collection.keys()
+        except EOFError:
+            pass
+        self.f.close()
+        if len(self.password.strip())==0:
+                box.showerror('ERROR','Please enter a password')
+        else:
+            if self.username.strip() in self.usernames:
+                box.showerror('ERROR','The entered username has already been taken.\nPlease enter another one')
+                self.entry_pass.delete(0,'end')
+                self.entry_user.delete(0,'end')
+            else:
+                self.collection[self.username.strip()]=self.password
+                self.f=open('user.dat','wb')
+                pickle.dump(self.collection,self.f)
+                self.f.close()
+                box.showinfo('Success','Your credentials have been saved.\nEnjoy using our app')
+                self.userdata='Username: '+self.username.strip()+'\nPassword: '+self.password
+                box.showinfo('Your credentials',self.userdata)
+                self.parent.destroy()
+                self.file=open(a+'.txt','a').close()
+                self.mainscreen()
+
+
+
 
 class Application(Frame):
 
@@ -36,7 +227,7 @@ class Application(Frame):
 
         self.entry_user = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#16776A',fg='#fff')
         self.entry_user.place(x=286, y=190)
-        
+
         self.entry_pass = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#1EBBA6',fg='#fff')
         self.entry_pass.place(x=286, y=250)
 
@@ -54,7 +245,7 @@ class Application(Frame):
         h = self.parent.winfo_screenheight()
         x = w/2 - 225
         y = h/2 - 225
-            
+
         self.parent.geometry("%dx%d+%d+%d" %(600,500,x,y))
         self.parent.resizable(0,0)
 
@@ -81,7 +272,10 @@ class Application(Frame):
             if self.password==self.a[self.username.strip()]:
                 self.parent.destroy()
                 self.file=open(a+'.txt','a').close()
-                self.mainscreen()
+                self.mainframe()
+                main_screen = Tk()
+                mainframe = main_frame(main_screen)
+                main_screen.mainloop()
             else:
                 box.showerror('ERROR','Incorrect username/password entered.\nPlease enter valid credentials')
                 self.entry_pass.delete(0,'end')
@@ -100,7 +294,7 @@ class Application(Frame):
             pass
         self.f.close()
         if len(self.password.strip())==0:
-                box.showerror('ERROR','Please enter a password') 
+                box.showerror('ERROR','Please enter a password')
         else:
             if self.username.strip() in self.usernames:
                 box.showerror('ERROR','The entered username has already been taken.\nPlease enter another one')
@@ -117,7 +311,7 @@ class Application(Frame):
                 self.parent.destroy()
                 self.file=open(a+'.txt','a').close()
                 self.mainscreen()
-                
+
     def mainscreen(self):
         main_screen = Tk()
         mainframe = main_frame(main_screen)
@@ -159,7 +353,7 @@ f.close()
 
 #----MAIN WINDOW OF APP----#
 class main_frame(Frame):
-    
+
     def __init__(self,parent):
         #frame_title.__init__(self,parent)
         Frame.__init__(self,parent)
@@ -188,7 +382,7 @@ class main_frame(Frame):
 
         self.history = Button(parent, text="View History", font=("Lato", 18), command=self.history, borderwidth=0, background='#c92d22', fg='#fff', height=1, width=10)
         self.history.place(x= 10, y = 485)
-        
+
     def centerWindow(self):
         w = self.parent.winfo_screenwidth()
         h = self.parent.winfo_screenheight()
@@ -224,30 +418,10 @@ class main_frame(Frame):
         loginframe = login_frame(logout)
         logout.mainloop()
 #----MAIN WINDOW OF APP----#
-      
+
 #----DRIVER SECTION OF APP----#
 root = Tk()
-app = Application(master=root)
+app = InitialPage(master=root)
 app.mainloop()
 root.destroy()
 #----DRIVER SECTION OF APP----#
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
