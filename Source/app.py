@@ -91,7 +91,7 @@ class frame_login(Frame):
         #InitialPage.__init__(self,master)
         intialpage = Tk()
         #InitialPage.__init__(self,master)
-        intial_page = InitialPage(initialpage)
+        intial_page = InitialPage(intialpage)
         intialpage.mainloop()
     def centerWindow(self):
         w = self.parent.winfo_screenwidth()
