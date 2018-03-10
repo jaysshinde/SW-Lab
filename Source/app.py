@@ -1,4 +1,4 @@
-#Making changes in mainframe---else working
+#Incase performance issues use tkraise
 import tkMessageBox as box
 import os
 import pickle
@@ -158,8 +158,31 @@ class frame_signup(Frame):
         self.entry_pass = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#1EBBA6',fg='#fff')
         self.entry_pass.place(x=286, y=250)
 
+        self.email_label=Label(master, text="Add your\nEmail ID: ",  font=("Lato", 18), fg='#fff', background='#1EBBA6', width=20)
+        self.email_label.place(x=0,y=310)
+
+        self.class_label=Label(master, text="Add your\nClass: ",  font=("Lato", 18), fg='#fff', background='#16776A', width=20)
+        self.class_label.place(x=0,y=370)
+
+        self.entry_email = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#16776A',fg='#fff')
+        self.entry_email.place(x=286, y=310)
+
+        self.entry_class = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#1EBBA6',fg='#fff')
+        self.entry_class.place(x=286, y=370)
+
         self.signup = Button(master, text="Sign Up", font=("Lato", 18), borderwidth=0, command=self.signup, background='#c92d22', fg='#fff', height=1, width=10)
-        self.signup.place(x= 300, y =340)
+        self.signup.place(x= 300, y =430)
+
+        self.back = Button(master, text="Back", font=("Lato", 18), borderwidth=0, command=self.back, background='#c92d22', fg='#fff', height=1, width=10)
+        self.back.place(x= 140, y = 430)
+
+    def back(self):
+        self.parent.destroy()
+        #InitialPage.__init__(self,master)
+        intialpage = Tk()
+        #InitialPage.__init__(self,master)
+        intial_page = InitialPage(intialpage)
+        intialpage.mainloop()
     def centerWindow(self):
         w = self.parent.winfo_screenwidth()
         h = self.parent.winfo_screenheight()
@@ -174,6 +197,8 @@ class frame_signup(Frame):
         self.username=self.entry_user.get().lower()
         a=self.username
         self.password=self.entry_pass.get()
+        self.email=self.entry_email.get()
+        self.classtype=self.entry_class.get().lower()
         self.f=open('user.dat','rb')
         try:
             while True:
@@ -189,6 +214,8 @@ class frame_signup(Frame):
                 box.showerror('ERROR','The entered username has already been taken.\nPlease enter another one')
                 self.entry_pass.delete(0,'end')
                 self.entry_user.delete(0,'end')
+                self.entry_email.delete(0,'end')
+                self.entry_class.delete(0,'end')
             else:
                 self.collection[self.username.strip()]=self.password
                 self.f=open('user.dat','wb')
