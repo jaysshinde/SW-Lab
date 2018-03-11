@@ -4,6 +4,8 @@ import os
 import pickle
 import time
 import Tix
+import db
+import os
 try:
     # for Python2
     from Tkinter import *   ## notice capitalized T in Tkinter
@@ -38,12 +40,14 @@ class InitialPage(Frame):
         login = Tk()
         framelogin = frame_login(login)
         login.mainloop()
+        login.destroy()
 
     def opensignup(self):
         self.parent.destroy()
         signup = Tk()
         framesignup = frame_signup(signup)
         signup.mainloop()
+        signup.destroy()
 
     def centerWindow(self):
         w = self.parent.winfo_screenwidth()
@@ -55,6 +59,11 @@ class InitialPage(Frame):
         self.parent.resizable(0,0)
     def quit(self):
         self.parent.destroy()
+
+    def database(self):
+        ret = db.setup_check()
+        if(ret != 1416):
+            box.showerror('ERROR',"DATABASE CAN NOT BE SET UP OR ACCESSED")
 
 class frame_login(Frame):
     def __init__(self,master=None):
@@ -77,7 +86,7 @@ class frame_login(Frame):
         self.entry_user = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#16776A',fg='#fff')
         self.entry_user.place(x=286, y=190)
 
-        self.entry_pass = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#1EBBA6',fg='#fff')
+        self.entry_pass = Entry(master,show="*",width = 25, borderwidth=0, font=("Calibri Light", 35),background='#1EBBA6',fg='#fff')
         self.entry_pass.place(x=286, y=250)
 
         self.login = Button(master, text="Log In", font=("Lato", 18), borderwidth=0, command=self.login, background='#c92d22', fg='#fff', height=1, width=10)
@@ -93,6 +102,7 @@ class frame_login(Frame):
         #InitialPage.__init__(self,master)
         intial_page = InitialPage(intialpage)
         intialpage.mainloop()
+        intialpage.destroy()
     def centerWindow(self):
         w = self.parent.winfo_screenwidth()
         h = self.parent.winfo_screenheight()
@@ -107,31 +117,20 @@ class frame_login(Frame):
         self.username=self.entry_user.get().lower()
         a=self.username
         self.password=self.entry_pass.get()
-        self.f=open('user.dat','rb')
-        try:
-            while True:
-                self.a=pickle.load(self.f)
-                self.usernames=self.a.keys()
-                if len(self.usernames)==1:
-                    self.entry_pass.delete(0,'end')
-        except EOFError:
-            pass
-        if self.password=='':
-            box.showerror('ERROR','Please enter a password before trying to login')
-        else:
-            if self.username.strip() not in self.usernames:
-                box.showerror('ERROR',"That username wasn't found in our directory.\nPlease sign up first")
-            if self.username.strip() in self.usernames:
-                if self.password==self.a[self.username.strip()]:
-                    self.parent.destroy()
-                    self.file=open(a+'.txt','a').close()
-                    self.mainscreen()
-                    main_page = Tk()
-                    mainframe = main_frame(main_page)
-                    main_page.mainloop()
-                else:
-                    box.showerror('ERROR','Incorrect username/password entered.\nPlease enter valid credentials')
-                    self.entry_pass.delete(0,'end')
+        obj = db.User(self.username,self.password)
+
+        fin = obj.check()
+        print fin
+        if(fin == 0):
+            box.showerror('ERROR',"Username doesn't exist")
+        elif(fin == 1):
+            os.system("say CORRECT PASSWORD")
+            self.parent.destroy()
+            fram = Tk()
+            init = InitialPage(fram)
+            fram.mainloop()
+            fram.destroy()
+
 
 class frame_signup(Frame):
     def __init__(self, master=None):
@@ -155,7 +154,7 @@ class frame_signup(Frame):
         self.entry_user = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#16776A',fg='#fff')
         self.entry_user.place(x=286, y=190)
 
-        self.entry_pass = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 35),background='#1EBBA6',fg='#fff')
+        self.entry_pass = Entry(master,show="*",width = 25, borderwidth=0, font=("Calibri Light", 35),background='#1EBBA6',fg='#fff')
         self.entry_pass.place(x=286, y=250)
 
         self.email_label=Label(master, text="Add your\nEmail ID: ",  font=("Lato", 18), fg='#fff', background='#1EBBA6', width=20)
@@ -193,40 +192,28 @@ class frame_signup(Frame):
         self.parent.resizable(0,0)
 
     def signup(self):
-        global a
-        self.username=self.entry_user.get().lower()
-        a=self.username
+        self.username=self.entry_user.get()
         self.password=self.entry_pass.get()
         self.email=self.entry_email.get()
-        self.classtype=self.entry_class.get().lower()
-        self.f=open('user.dat','rb')
-        try:
-            while True:
-                self.collection=pickle.load(self.f)
-                self.usernames=self.collection.keys()
-        except EOFError:
-            pass
-        self.f.close()
-        if len(self.password.strip())==0:
-                box.showerror('ERROR','Please enter a password')
-        else:
-            if self.username.strip() in self.usernames:
-                box.showerror('ERROR','The entered username has already been taken.\nPlease enter another one')
-                self.entry_pass.delete(0,'end')
-                self.entry_user.delete(0,'end')
-                self.entry_email.delete(0,'end')
-                self.entry_class.delete(0,'end')
-            else:
-                self.collection[self.username.strip()]=self.password
-                self.f=open('user.dat','wb')
-                pickle.dump(self.collection,self.f)
-                self.f.close()
-                box.showinfo('Success','Your credentials have been saved.\nEnjoy using our app')
-                self.userdata='Username: '+self.username.strip()+'\nPassword: '+self.password
-                box.showinfo('Your credentials',self.userdata)
-                self.parent.destroy()
-                self.file=open(a+'.txt','a').close()
-                self.mainscreen()
+        self.classtype=self.entry_class.get()
+
+        obj = db.User(self.username,self.password,self.email,self.classtype)
+        fin = obj.sign_proc()
+
+        if(fin == -1):
+            box.showerror('ERROR',"USERNAME NOT UNIQUE RETRY!")
+            self.entry_user.delete(0,'end')
+            self.entry_pass.delete(0,'end')
+        elif(fin == -2):
+            box.showerror('ERROR',"Email ID already in use")
+            self.entry_email.delete(0,'end')
+            self.entry_pass.delete(0,'end')
+        elif(fin == 0):
+            box.showinfo('SUCCESS',"SIGNUP SUCCESSFUL")
+            fram = Tk()
+            init = frame_login(fram)
+            fram.mainloop()
+            fram.detroy()
 
 
 
