@@ -436,6 +436,7 @@ class main_frame(Frame):
 #----DRIVER SECTION OF APP----#
 root = Tk()
 app = InitialPage(master=root)
+app.database()
 app.mainloop()
 root.destroy()
 #----DRIVER SECTION OF APP----#
