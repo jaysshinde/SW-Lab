@@ -112,6 +112,11 @@ class frame_login(Frame):
         self.parent.geometry("%dx%d+%d+%d" %(600,500,x,y))
         self.parent.resizable(0,0)
 
+    def clear(self):
+        self.entry_user.delete(0,'end')
+        self.entry_pass.delete(0,'end')
+
+
     def login(self):
         global a
         self.username=self.entry_user.get().lower()
@@ -119,17 +124,44 @@ class frame_login(Frame):
         self.password=self.entry_pass.get()
         obj = db.User(self.username,self.password)
 
-        fin = obj.check()
-        print fin
-        if(fin == 0):
-            box.showerror('ERROR',"Username doesn't exist")
-        elif(fin == 1):
-            os.system("say CORRECT PASSWORD")
-            self.parent.destroy()
-            fram = Tk()
-            init = InitialPage(fram)
-            fram.mainloop()
-            fram.destroy()
+        if(len(self.username) == 0):
+            self.clear()
+            box.showerror('ERROR',"Username cannot be empty")
+        elif(len(self.password) == 0):
+            self.clear()
+            box.showerror('ERROR',"Password cannot be empty")
+        else:
+            fin = obj.check()
+            print fin
+            if(fin == 0):
+                self.clear()
+                box.showerror('ERROR',"Username doesn't exist")
+            elif(fin == 1):
+                fin = obj.check()
+                if(fin == 0):
+                    box.showerror('ERROR',"Username doesn't exist")
+                elif(fin == 1):
+                    os.system("say CORRECT PASSWORD")
+                    if obj.uclass=="emp":
+                        print "ayush"
+                        self.parent.destroy()
+                        employee=Tk()
+                        emp=Employee(employee)
+                        '''emp.att1=obj.name
+                        emp.att2=obj.pwd
+                        emp.att3=obj.email
+                        emp.att4=obj.uclass'''
+                        employee.mainloop()
+                        employee.destroy()
+                    elif obj.uclass=="mas":
+                        self.parent.destroy()
+                        master=Tk()
+                        mas=Master(master)
+                        master.mainloop()
+                        master.destroy()
+
+
+
 
 
 class frame_signup(Frame):
@@ -216,81 +248,62 @@ class frame_signup(Frame):
             fram.mainloop()
             fram.detroy()
 
-
-
-
-
-
-#----MAIN WINDOW OF APP----#
-class main_frame(Frame):
-
-    def __init__(self,parent):
-        #frame_title.__init__(self,parent)
-        Frame.__init__(self,parent)
-        self.parent=parent
-        self.parent.title("Multi-Functional Accounting Software")
-        self.parent.configure(bg="#2d3339")
+class Employee(Frame):
+    def __init__(self,master=None):
+        Frame.__init__(self,master)
+        '''self.att1 = att1
+        self.att2 = att2
+        self.att3 = att3
+        self.att4 = att4'''
+        self.parent = master
+        self.parent.title("Employee")
+        self.parent.configure(background="#2d3339")
+        #self.pack()
         self.centerWindow()
 
-        self.welcometext=Label(parent, text='Welcome '+a,font=("Lato", 20), fg='#fff', background='#2d3339')
-        self.welcometext.place(x=10,y=80)
+        self.login_label=Label(master, text='EMPLOYEE SCREEN', font=('Lato',20), fg='#fff', background='#2d3339')
+        self.login_label.place(x=170,y=120)
 
-        self.label1=Label(parent, text='What would you like to do today?', font=('Lato', 20), fg='#fff', background='#2d3339')
-        self.label1.place(x=75, y=155)
 
-        self.encryption = Button(parent, text="Encryption", font=("Lato", 18), command=self.encry, borderwidth=0, background='#1EBBA6', fg='#fff', height=2, width=20)
-        self.encryption.place(x= 140, y = 230)
+        self.bill = Button(master, text='Bill Calculation', font=('Lato', 18), borderwidth=0, command=self.bill_calc, background='#c92d22', fg='#fff', height=1, width=20)
+        self.bill.place(x= 170, y = 180)
 
-        self.decryption = Button(parent, text="Decryption", font=("Lato", 18), command=self.decry, borderwidth=0, background='#16776A', fg='#fff', height=2, width=20)
-        self.decryption.place(x= 140, y = 330)
+        self.tax = Button(master, text='Tax Calculation', font=('Lato', 18), borderwidth=0, command=self.taxcalc, background='#c92d22', fg='#fff', height=1, width=20)
+        self.tax.place(x= 170, y = 240)
+        self.transdata = Button(master, text='Add Transaction data', font=('Lato', 18), borderwidth=0, command=self.addtrans, background='#c92d22', fg='#fff', height=1, width=20)
+        self.transdata.place(x= 170, y = 300)
 
-        self.quit = Button(parent, text="Quit", font=("Lato", 18), command=self.quit, borderwidth=0, background='#c92d22', fg='#fff', height=1, width=5)
-        self.quit.place(x= 460, y = 485)
+        self.logout = Button(master, text='Back', font=('Lato', 18), borderwidth=0, command=self.logout, background='#c92d22', fg='#fff', height=1, width=10)
+        self.logout.place(x= 400, y = 360)
 
-        self.logout = Button(parent, text="Log Out", font=("Lato", 18), command=self.logout, borderwidth=0, background='#c92d22', fg='#fff', height=1, width=7)
-        self.logout.place(x= 330, y = 485)
+    def bill_calc(self):
+        os.system("say Bill Calculation" )
+    def taxcalc(self):
+        os.system("say Tax Calculation" )
+    def addtrans(self):
+        os.system("say Add Transaction Data" )
 
-        self.history = Button(parent, text="View History", font=("Lato", 18), command=self.history, borderwidth=0, background='#c92d22', fg='#fff', height=1, width=10)
-        self.history.place(x= 10, y = 485)
-
-    def centerWindow(self):
-        w = self.parent.winfo_screenwidth()
-        h = self.parent.winfo_screenheight()
-        x = w/2 - 275
-        y = h/2 - 275
-        self.parent.geometry("%dx%d+%d+%d" % (550,550,x,y))
-        self.parent.resizable(0,0)
-
-    def encry(self):  #Encryption Frame
-        self.parent.destroy()
-        encrypt = Tk()
-        frameencrypt = frame_encrypt(encrypt)
-        encrypt.mainloop()
-
-    def decry(self): #Decryption Frame
-        self.parent.destroy()
-        decrypt = Tk()
-        framedecrypt = frame_decrypt(decrypt)
-        decrypt.mainloop()
-
-    def history(self): #History Frame
-        self.parent.destroy()
-        viewhistory=Tk()
-        historyframe=frame_history(viewhistory)
-        viewhistory.mainloop()
-
-    def quit(self):
-        self.parent.destroy()
 
     def logout(self):
         self.parent.destroy()
-        logout = Tk()
-        loginframe = login_frame(logout)
-        logout.mainloop()
-#----MAIN WINDOW OF APP----#
+        #InitialPage.__init__(self,master)
+        intialpage = Tk()
+        #InitialPage.__init__(self,master)
+        intial_page = InitialPage(intialpage)
+        intialpage.mainloop()
+        intialpage.destroy()
+    def centerWindow(self):
+        w = self.parent.winfo_screenwidth()
+        h = self.parent.winfo_screenheight()
+        x = w/2 - 225
+        y = h/2 - 225
+
+        self.parent.geometry("%dx%d+%d+%d" %(600,500,x,y))
+        self.parent.resizable(0,0)
 
 #----DRIVER SECTION OF APP----#
 root = Tk()
+root.iconbitmap(r"Users/ayush/Desktop/virtualenvs/sw-lab/git/SW-Lab/Images/image.png")
 app = InitialPage(master=root)
 app.database()
 app.mainloop()
