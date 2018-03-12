@@ -34,6 +34,8 @@ def setup_check():
         cur.execute("SELECT COUNT(*) FROM Users")
         var = cur.fetchall()
         db.commit()
+        db_access = 1416
+        return db_access
 
     except sqlite3.OperationalError:
         cur = db.cursor()
@@ -103,6 +105,9 @@ class User(object):
                 return 0
             else:
                 if(res[0][2] == self.pwd):
+                    cur.execute("SELECT Class FROM Users WHERE Username = ?",(self.name,))
+                    res = cur.fetchall()
+                    self.uclass = res[0][0]
                     return 1
     def sign_proc(self):
         ret = self.check()
