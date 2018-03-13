@@ -62,7 +62,7 @@ def setup_check():
 	       FOREIGN KEY(`Item ID`) REFERENCES `ItemMaster`(`Item ID`)
                           )""")
         cur.execute("""CREATE TABLE `Transactions` (
-        	`Trans ID`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        	`Trans ID`	INTEGER NOT NULL PRIMARY KEY,
         	`Item ID`	INTEGER NOT NULL,
         	`Sales/Purchase`	TEXT NOT NULL,
         	`Quantity`	REAL NOT NULL,
