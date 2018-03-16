@@ -193,7 +193,7 @@ class Trans(User):
             cur = db.cursor()
             for i in range(0,self.count):
                 cur.execute("INSERT INTO Transactions(TransID,ItemID,Sales_Purchase,Quantity,Cost,Tax,UserID) VALUES (?,?,?,?,?,?,?)",(self.tid,int(self.info[i][0]),self.cat,int(self.info[i][2]),self.cost[i],float(self.taxes[i]),int(self.uid[0]),))
-
+                db.commit()
     def inventory(self):
         with sqlite3.connect(db_name) as db:
             cur = db.cursor()
@@ -208,9 +208,7 @@ class Trans(User):
                     return 113
                 elif(quan >= 0):
                     cur.execute("UPDATE ItemMaster SET Quantity = ? WHERE ItemID = ?",(quan,self.info[i][0],))
-
-
-
+                    db.commit()
 
     def dothis(self):
         try:
@@ -224,3 +222,45 @@ class Trans(User):
                 return 1
         except:
             return 0
+
+
+def bill_calc(transID):
+    with sqlite3.connect(db_name) as db:
+        cur = db.cursor()
+        cur.execute("SELECT * FROM Transactions WHERE TransID = ?",(transID,))
+        res = cur.fetchall()
+        size = len(res)
+        if(size == 0):
+            return -1
+        else:
+            cost = 0.0
+            tax = 0.0
+            for i in range(size):
+                cost = cost + float(res[i][4])
+                tax = tax + float(res[i][5])
+            plist = [cost,tax,cost+tax]
+            return plist,res
+
+def fetchname(info):
+    with sqlite3.connect(db_name) as db:
+        cur = db.cursor()
+        namelist = []
+        for i in range(len(info)):
+            cur.execute("SELECT ItemName FROM ItemMaster WHERE ItemID = ?",(info[i][1],))
+            res = cur.fetchall()
+            namelist.append(res[0][0])
+        return namelist
+
+def addinventory(info):
+    size = len(info)
+    with sqlite3.connect(db_name) as db:
+        cur = db.cursor()
+        for i in range(size):
+            try:
+                cur.execute("INSERT INTO ItemMaster(ItemID,ItemName,Category,Price,Unit_s,Quantity) VALUES (?,?,?,?,?,?)",(int(info[i][0]),info[i][1],info[i][3],float(info[i][2]),int(info[i][4]),float(info[i][5]),))
+                db.commit()
+                cur = db.cursor()
+                cur.execute("INSERT INTO TaxRates(ItemID,ProductTax,GST,AdditionalTaxes) VALUES(?,?,?,?)",(int(info[i][0]),float(info[i][6]),float(info[i][7]),float(info[i][8]),))
+                return 0
+            except:
+                return -1
