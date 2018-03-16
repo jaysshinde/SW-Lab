@@ -7,6 +7,7 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 from apiclient.http import MediaFileUpload, MediaIoBaseDownload
+import datetime
 
 try:
     import argparse
@@ -65,13 +66,27 @@ def createFolder(name):
     print ('Folder ID: %s' % file.get('id'))
 
 
-SCOPES = 'https://www.googleapis.com/auth/drive'
-CLIENT_SECRET_FILE = 'client_secret.json'
-APPLICATION_NAME = 'Backup Agent'
-authInst = auth(SCOPES,CLIENT_SECRET_FILE,APPLICATION_NAME)
-credentials = authInst.getCredentials()
+def backupnow():
+    try:
+        global SCOPES
+        global CLIENT_SECRET_FILE
+        global APPLICATION_NAME
+        global authInst
+        global credentials
+        global http
+        global drive_service
+        SCOPES = 'https://www.googleapis.com/auth/drive'
+        CLIENT_SECRET_FILE = 'client_secret.json'
+        APPLICATION_NAME = 'Backup'
+        authInst = auth(SCOPES,CLIENT_SECRET_FILE,APPLICATION_NAME)
+        credentials = authInst.getCredentials()
 
-http = credentials.authorize(httplib2.Http())
-drive_service = discovery.build('drive', 'v3', http=http)
+        http = credentials.authorize(httplib2.Http())
+        drive_service = discovery.build('drive', 'v3', http=http)
 
-uploadFile('main_database.db','main_database.db','text/csv')
+        cdt = datetime.datetime.now()
+        FileName = 'main_database.db' + str(cdt)
+        uploadFile(FileName,'main_database.db','text/csv')
+        return 0
+    except:
+        return -1
