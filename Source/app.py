@@ -10,6 +10,7 @@ import Tix
 import db
 import em
 import os
+import backup
 
 try:
     # for Python2
@@ -39,6 +40,7 @@ class InitialPage(Frame):
 
         self.quit = Button(master, text="Quit", font=("Lato", 18), command=self.quit, borderwidth=0, background='#c92d22', fg='#fff', height=1, width=5)
         self.quit.place(x= 480, y = 425)
+
 
     def openlogin(self):
         self.parent.destroy()
@@ -101,6 +103,13 @@ class frame_login(Frame):
         self.back = Button(master, text="Back", font=("Lato", 18), borderwidth=0, command=self.back, background='#c92d22', fg='#fff', height=1, width=10)
         self.back.place(x= 300, y = 339)
 
+        fin = backup.backupnow()
+
+        if(fin == -1):
+            box.showerror('ERROR',"PROBLEM BACKING UP DATABASE CHECK CONNECTION")
+        elif(fin == 0):
+            box.showinfo('SUCCESS',"Backup Successful")
+
     def back(self):
         self.parent.destroy()
         #InitialPage.__init__(self,master)
@@ -138,7 +147,6 @@ class frame_login(Frame):
             box.showerror('ERROR',"Password cannot be empty")
         else:
             fin = obj.check()
-            print fin
             if(fin == 0):
                 self.clear()
                 box.showerror('ERROR',"Username doesn't exist")
@@ -147,16 +155,14 @@ class frame_login(Frame):
                 if(fin == 0):
                     box.showerror('ERROR',"Username doesn't exist")
                 elif(fin == 1):
-                    os.system("say CORRECT PASSWORD")
                     if obj.uclass=="emp":
-                        print "ayush"
                         self.parent.destroy()
                         employee=Tk()
                         emp=Employee(employee)
-                        '''emp.att1=obj.name
-                        emp.att2=obj.pwd
-                        emp.att3=obj.email
-                        emp.att4=obj.uclass'''
+                        emp.name=obj.name
+                        emp.pwd=obj.pwd
+                        emp.email=obj.email
+                        emp.uclass=obj.uclass
                         employee.mainloop()
                         employee.destroy()
                     elif obj.uclass=="mas":
@@ -168,6 +174,8 @@ class frame_login(Frame):
                         mas.uclass = obj.uclass
                         master.mainloop()
                         master.destroy()
+            else:
+                box.showerror('ERROR',"Incorrect Password")
 
 
 class verify(Frame):
@@ -338,7 +346,7 @@ class Employee(Frame):
         self.bill = Button(master, text='Bill/Tax Calculation', font=('Lato', 18), borderwidth=0, command=self.bill_calc, background='#c92d22', fg='#fff', height=1, width=20)
         self.bill.place(x= 170, y = 180)
 
-        self.tax = Button(master, text='Add a Field', font=('Lato', 18), borderwidth=0, command=self.taxcalc, background='#c92d22', fg='#fff', height=1, width=20)
+        self.tax = Button(master, text='Employee Report', font=('Lato', 18), borderwidth=0, command=self.taxcalc, background='#c92d22', fg='#fff', height=1, width=20)
         self.tax.place(x= 170, y = 240)
         self.transdata = Button(master, text='Add Transaction data', font=('Lato', 18), borderwidth=0, command=self.addtrans, background='#c92d22', fg='#fff', height=1, width=20)
         self.transdata.place(x= 170, y = 300)
@@ -347,16 +355,14 @@ class Employee(Frame):
         self.logout.place(x= 400, y = 360)
 
     def bill_calc(self):
-        os.system("say Bill Calculation" )
         billframe=Tk()
         bf=bill_frame(billframe)
         billframe.mainloop()
         billframe.destroy()
     def taxcalc(self):
-        os.system("say Tax Calculation" )
+        box.showinfo('OOPS',"To be implemented in the next build")
 
     def addtrans(self):
-        os.system("say Add Transaction Data" )
         transframe=Tk()
         tf=transaction_frame(transframe)
         transframe.mainloop()
@@ -409,7 +415,6 @@ class bill_frame(Frame):
         self.price_dict = {}
         self.tax_dict = {}
     def done(self):
-        os.system("say Done")
         tid = int(self.entry_tid.get())
         output = db.bill_calc(tid)
 
@@ -417,7 +422,6 @@ class bill_frame(Frame):
             box.showerror('ERROR',"No Records for that Transaction ID")
         else:
             size = len(output[1])
-            print output
             itemname = db.fetchname(output[1])
             self.printbill(size,output,itemname)
 
@@ -503,7 +507,6 @@ class transaction_frame(Frame):
         self.entry_quan = {}
     def done(self):
         #ADD CLASS DATA HERE FOR TRANSACTION
-        #os.system("say Done")
         info_get = []
         cat = self.entry_type.get()
         flag=0
@@ -611,7 +614,6 @@ class Master(Frame):
         self.logout.place(x= 400, y = 450)
 
     def a_inventory(self):
-    	self.parent.destroy()
     	invframe=Tk()
         inf=inventory_frame(invframe)
         invframe.mainloop()
@@ -648,14 +650,12 @@ class Master(Frame):
         self.parent.geometry("%dx%d+%d+%d" %(600,500,x,y))
         self.parent.resizable(0,0)
     def bill_calc(self):
-        os.system("say Bill Calculation" )
         billframe=Tk()
         bf=bill_frame(billframe)
         billframe.mainloop()
         billframe.destroy()
 
     def addtrans(self):
-        os.system("say Add Transaction Data" )
         transframe=Tk()
         tf=transaction_frame(transframe,self.name)
         transframe.mainloop()
@@ -756,23 +756,25 @@ class inventory_frame(Frame):
             new.append(self.entry_gst[i].get())
             new.append(self.entry_atax[i].get())
             info_get.append(new)
+
         for i in range(0,self.count):
             if (len(info_get[i][0])==0 or len(info_get[i][1])==0 or len(info_get[i][2])==0 or len(info_get[i][3])==0 or len(info_get[i][4])==0 or len(info_get[i][5])==0 or len(info_get[i][6])==0 or len(info_get[i][7])==0 or len(info_get[i][8])==0):
                 flag=1
                 break
-        '''if(flag==0):
-            obj = db.Trans(010,self.count,info_get,self.name,cat)
-            fin = obj.dothis()
+        if(flag==0):
+            fin = db.addinventory(info_get)
 
-            if(fin == 1):
-                box.showinfo('SUCCESS',"Transaction added successfully")
+            if(fin == 0):
+                box.showinfo('SUCCESS',"Items added successfully")
                 self.parent.destroy()
-            elif(fin == 0):
-                box.showerror('ERROR',"Couldn't add transaction")
+                blob = Tk()
+                obj = Master(blob)
+                blob.mainloop()
+                blob.destroy()
             elif(fin == -1):
-                box.showerror('ERROR',"You do not have sufficient quantity for the product")
+                box.showerror('ERROR',"Invalid Entries Please Retry")
         else:
-            box.showinfo('ERROR','Empty value fields')'''
+            box.showinfo('ERROR','Empty value fields')
 
 class UserManage(Frame):
     def __init__(self,master=None):
@@ -856,6 +858,7 @@ class business_reports(Frame):
         self.done_item.place(x= 400, y = 50)
         #self.tid_label=Label(master, text="Add Transaction ID: ",  font=("Lato", 15), fg='#fff', background='#2d3339', width=15)
         #self.tid_label.place(x=50,y=100)
+        box.showinfo('OOPS',"To be implemented in the next build")
     def centerWindow(self):
         w = self.parent.winfo_screenwidth()
         h = self.parent.winfo_screenheight()
@@ -886,6 +889,7 @@ class stocks_prediction(Frame):
         self.done_item.place(x= 400, y = 50)
         #self.tid_label=Label(master, text="Add Transaction ID: ",  font=("Lato", 15), fg='#fff', background='#2d3339', width=15)
         #self.tid_label.place(x=50,y=100)
+        box.showinfo('OOPS',"To be implemented in the next build")
     def centerWindow(self):
         w = self.parent.winfo_screenwidth()
         h = self.parent.winfo_screenheight()
@@ -910,4 +914,5 @@ app = InitialPage(master=root)
 app.database()
 app.mainloop()
 root.destroy()
+
 #----DRIVER SECTION OF APP----#
