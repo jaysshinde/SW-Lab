@@ -7,6 +7,8 @@
 '''
 import sqlite3
 import os
+import random
+from passlib.hash import pbkdf2_sha256 as hasher
 #from pysqlcipher import dbapi2 as sqlcipher
 
 db_name = "main_database.db"
@@ -45,8 +47,8 @@ def setup_check():
         cur.execute("DROP TABLE IF EXISTS Users")
 
         cur.execute("""CREATE TABLE `ItemMaster` (
-	         `Item ID`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
-	         `Item Name`	TEXT NOT NULL,
+	         `ItemID`	INTEGER NOT NULL PRIMARY KEY UNIQUE,
+	         `ItemName`	TEXT NOT NULL,
 	         `Category`	TEXT NOT NULL,
 	         `Price`	REAL NOT NULL,
 	         `Unit_s`	INTEGER NOT NULL,
@@ -54,26 +56,27 @@ def setup_check():
 	         `Remarks`	TEXT)"""
                              )
         cur.execute("""CREATE TABLE `TaxRates` (
-	       `Item ID`	INTEGER NOT NULL,
-	       `Product Tax`	REAL NOT NULL,
+	       `ItemID`	INTEGER NOT NULL UNIQUE,
+	       `ProductTax`	REAL NOT NULL,
 	       `GST`	REAL NOT NULL,
-	       `Additional Taxes`	REAL,
+	       `AdditionalTaxes`	REAL,
 	       `Remarks`	TEXT,
-	       FOREIGN KEY(`Item ID`) REFERENCES `ItemMaster`(`Item ID`)
+	       FOREIGN KEY(`ItemID`) REFERENCES `ItemMaster`(`ItemID`)
                           )""")
         cur.execute("""CREATE TABLE `Transactions` (
-        	`Trans ID`	INTEGER NOT NULL PRIMARY KEY,
-        	`Item ID`	INTEGER NOT NULL,
-        	`Sales/Purchase`	TEXT NOT NULL,
+        	`TransID`	INTEGER NOT NULL,
+        	`ItemID`	INTEGER NOT NULL,
+        	`Sales_Purchase`	TEXT NOT NULL,
         	`Quantity`	REAL NOT NULL,
         	`Cost`	REAL NOT NULL,
         	`Tax`	REAL NOT NULL,
-        	`User ID`	INTEGER NOT NULL,
-        	FOREIGN KEY(`User ID`) REFERENCES `Users`(`User ID`)
+        	`UserID`	INTEGER NOT NULL,
+            FOREIGN KEY(`ItemID`) REFERENCES `ItemMaster`(`ItemID`),
+        	FOREIGN KEY(`UserID`) REFERENCES `Users`(`UserID`)
         )""")
 
         cur.execute("""CREATE TABLE `Users` (
-        	`User ID`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+        	`UserID`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
         	`Username`	TEXT NOT NULL UNIQUE,
         	`Password`	TEXT NOT NULL,
             'EmailID'  TEXT NOT NULL UNIQUE,
@@ -83,6 +86,15 @@ def setup_check():
         db.commit()
         db_access = 1416
         return db_access
+
+#Function only for master user insecure right now
+def access_user():
+    with sqlite3.connect(db_name) as db:
+        cur = db.cursor()
+        cur.execute("SELECT * FROM Users")
+        res = cur.fetchall()
+
+    return res,len(res)
 
 ######################################################
 ##                                                  ##
@@ -122,3 +134,93 @@ class User(object):
                     return -2 #-2 is for Email ID being not UNIQUE
         else:
             return -1 #-1 is for Username being not unique
+
+
+class Trans(User):
+    def __init__(self,transid,count,info,name,cat):
+        self.transid = transid
+        self.count = count
+        self.info = info
+        self.name = name
+        self.cat = cat
+        # In list info
+        # Index 0 is for Item ID
+        # Index 1 is for Item Name
+        # Index 2 is for quantity
+
+        with sqlite3.connect(db_name) as db:
+            cur = db.cursor()
+            cur.execute("SELECT UserID FROM Users WHERE Username = ?",(self.name,))
+            res = cur.fetchall()
+            self.uid = res[0]
+
+        self.cost = []
+        self.taxes = []
+
+
+    #Retreives calculated tax to be added to the Transcation table
+    #Update Tax Column
+    def retreive(self):
+        with sqlite3.connect(db_name) as db:
+            cur = db.cursor()
+            for i in range(0,self.count):
+                cur.execute("SELECT * FROM TaxRates WHERE ItemID = ?",(self.info[i][0],))
+                res = cur.fetchall()
+                self.rates = res
+                val = float(0)
+                for j in range(1,4):
+                    if( self.rates[0][j] != None):
+                        val = val + ((self.cost[i] * float(self.rates[0][j]))/100)
+                self.taxes.append(val)
+
+
+            # Fetched all data till now
+            #Process and add remaining stuff
+    def price_calc(self):
+        # Calculate Prices from quantity update Cost Column'''
+        with sqlite3.connect(db_name) as db:
+            cur = db.cursor()
+            for i in range(0,self.count):
+                cur.execute("SELECT Price,Unit_s FROM ItemMaster WHERE  ItemID = ?",(self.info[i][0],))
+                res = cur.fetchall()
+                val = float(res[0][0]) * (float(self.info[i][2])/float(res[0][1]))
+                print val
+                self.cost.append(val)
+
+    def to_database(self):
+        self.tid = random.randint(1,100000)
+        with sqlite3.connect(db_name) as db:
+            cur = db.cursor()
+            for i in range(0,self.count):
+                cur.execute("INSERT INTO Transactions(TransID,ItemID,Sales_Purchase,Quantity,Cost,Tax,UserID) VALUES (?,?,?,?,?,?,?)",(self.tid,int(self.info[i][0]),self.cat,int(self.info[i][2]),self.cost[i],float(self.taxes[i]),int(self.uid[0]),))
+
+    def inventory(self):
+        with sqlite3.connect(db_name) as db:
+            cur = db.cursor()
+            for i in range(0,self.count):
+                cur.execute("SELECT Quantity FROM ItemMaster WHERE ItemID = ?",(self.info[i][0],))
+                res = cur.fetchall()
+                res = int(res[0][0])
+                demand = int(self.info[i][2])
+                quan = res - demand
+
+                if(quan < 0):
+                    return 113
+                elif(quan >= 0):
+                    cur.execute("UPDATE ItemMaster SET Quantity = ? WHERE ItemID = ?",(quan,self.info[i][0],))
+
+
+
+
+    def dothis(self):
+        try:
+            self.price_calc()
+            self.retreive()
+            self.to_database()
+            val = self.inventory()
+            if(val == 113):
+                return -1
+            else:
+                return 1
+        except:
+            return 0
