@@ -1,5 +1,7 @@
 #Incase performance issues use tkraise
 #Dump object data on logout
+#Email Not sent yet added
+#Hashing passwords using hasher add the code
 import tkMessageBox as box
 import os
 import pickle
@@ -8,6 +10,7 @@ import Tix
 import db
 import em
 import os
+
 try:
     # for Python2
     from Tkinter import *   ## notice capitalized T in Tkinter
@@ -122,7 +125,7 @@ class frame_login(Frame):
 
     def login(self):
         global a
-        self.username=self.entry_user.get().lower()
+        self.username=self.entry_user.get()
         a=self.username
         self.password=self.entry_pass.get()
         obj = db.User(self.username,self.password)
@@ -160,6 +163,9 @@ class frame_login(Frame):
                         self.parent.destroy()
                         master=Tk()
                         mas=Master(master)
+                        mas.name = self.username
+                        mas.pwd = self.password
+                        mas.uclass = obj.uclass
                         master.mainloop()
                         master.destroy()
 
@@ -197,6 +203,9 @@ class verify(Frame):
         h = self.parent.winfo_screenheight()
         x = w/2 - 225
         y = h/2 - 225
+
+        #self.parent.geometry("%dx%d+%d+%d" %(300,300,x,y))
+        #self.parent.resizable(0,0)
 
 
 #pass user attributes to dependent classes
@@ -436,8 +445,9 @@ class bill_frame(Frame):
 
 #pass user attributes to dependent classes
 class transaction_frame(Frame):
-    def __init__(self,master=None):
+    def __init__(self,master=None,name =""):
         Frame.__init__(self,master)
+        self.name = name
         self.parent = master
         self.parent.title("Transaction Data")
         self.parent.configure(background="#2d3339")
@@ -457,34 +467,70 @@ class transaction_frame(Frame):
         self.entry_type.place(x=300, y=100)
 
         self.count=0
+        self.entry_id = {}
+        self.entry_name = {}
+        self.entry_quan = {}
     def done(self):
-        os.system("say Done")
+        #ADD CLASS DATA HERE FOR TRANSACTION
+        #os.system("say Done")
+        info_get = []
+        cat = self.entry_type.get()
+        flag=0
+        for i in range(0,self.count):
+            new = []
+            new.append(self.entry_id[i].get())
+            new.append(self.entry_name[i].get())
+            new.append(self.entry_quan[i].get())
+            info_get.append(new)
+        for i in range(0,self.count):
+            if (len(info_get[i][0])==0 or len(info_get[i][1])==0 or len(info_get[i][2])==0):
+                flag=1
+                break
+        if(flag==0):
+            obj = db.Trans(010,self.count,info_get,self.name,cat)
+            fin = obj.dothis()
+
+            if(fin == 1):
+                box.showinfo('SUCCESS',"Transaction added successfully")
+                self.parent.destroy()
+            elif(fin == 0):
+                box.showerror('ERROR',"Couldn't add transaction")
+            elif(fin == -1):
+                box.showerror('ERROR',"You do not have sufficient quantity for the product")
+        else:
+            box.showinfo('ERROR','Empty value fields')
+
+
+
+
 
     def additem(self):
         master=self.parent
         self.itemid_label=Label(master, text="Item ID: ",  font=("Lato", 15), fg='#fff', background='#1EBBA6', width=10)
         self.itemid_label.place(x=50,y=200+125*self.count)
 
+
+
         self.itemname_label=Label(master, text="Item Name: ",  font=("Lato", 15), fg='#fff', background='#16776A', width=10)
         self.itemname_label.place(x=50,y=225+125*self.count)
 
-        self.entry_id = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 15),background='#16776A',fg='#fff')
-        self.entry_id.place(x=150, y=200+125*self.count)
+        self.entry_id[self.count] = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 15),background='#16776A',fg='#fff')
+        self.entry_id[self.count].place(x=150, y=200+125*self.count)
 
-        self.entry_name = Entry(master,width = 25, borderwidth=0, font=("Calibri Light", 15),background='#1EBBA6',fg='#fff')
-        self.entry_name.place(x=150, y=225+125*self.count)
+        self.entry_name[self.count] = Entry(master,width = 25, borderwidth=0, font=("Calibri Light", 15),background='#1EBBA6',fg='#fff')
+        self.entry_name[self.count].place(x=150, y=225+125*self.count)
 
         self.quan_label=Label(master, text="Quantity: ",  font=("Lato", 15), fg='#fff', background='#1EBBA6', width=10)
         self.quan_label.place(x=50,y=250+125*self.count)
 
-        self.price_label=Label(master, text="Price: ",  font=("Lato", 15), fg='#fff', background='#16776A', width=10)
-        self.price_label.place(x=50,y=275+125*self.count)
+        '''self.price_label=Label(master, text="Price: ",  font=("Lato", 15), fg='#fff', background='#16776A', width=10)
+        self.price_label.place(x=50,y=275+125*self.count)'''
 
-        self.entry_quan = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 15),background='#16776A',fg='#fff')
-        self.entry_quan.place(x=150, y=250+125*self.count)
+        self.entry_quan[self.count] = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 15),background='#16776A',fg='#fff')
+        self.entry_quan[self.count].place(x=150, y=250+125*self.count)
 
-        self.entry_price = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 15),background='#1EBBA6',fg='#fff')
-        self.entry_price.place(x=150, y=275+125*self.count)
+        '''self.entry_price = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 15),background='#1EBBA6',fg='#fff')
+        self.entry_price.place(x=150, y=275+125*self.count)'''
 
 
         self.count+=1
@@ -498,12 +544,12 @@ class transaction_frame(Frame):
         self.parent.resizable(1,1)
 
 class Master(Frame):
-    def __init__(self,master=None):
+    def __init__(self,master=None,name="",pwd="",email="",uclass=""):
         Frame.__init__(self,master)
-        '''self.att1 = att1
-        self.att2 = att2
-        self.att3 = att3
-        self.att4 = att4'''
+        self.name = name
+        self.pwd = pwd
+        self.email = email
+        self.uclass = uclass
         self.parent = master
         self.parent.title("Master")
         self.parent.configure(background="#2d3339")
@@ -532,6 +578,7 @@ class Master(Frame):
 
         self.logout = Button(master, text='Logout', font=('Lato', 18), borderwidth=0, command=self.logout, background='#c92d22', fg='#fff', height=1, width=10)
         self.logout.place(x= 400, y = 450)
+
 
     def b_reports(self):
     	self.parent.destroy()
@@ -573,15 +620,17 @@ class Master(Frame):
     def addtrans(self):
         os.system("say Add Transaction Data" )
         transframe=Tk()
-        tf=transaction_frame(transframe)
+        tf=transaction_frame(transframe,self.name)
         transframe.mainloop()
         transframe.destroy()
     def user_manage(self):
         self.parent.destroy()
         um=Tk()
         umanage=UserManage(um)
+        umanage.uclass = self.uclass
         um.mainloop()
         um.destroy()
+
 class UserManage(Frame):
     def __init__(self,master=None):
         Frame.__init__(self,master)
@@ -593,15 +642,26 @@ class UserManage(Frame):
         self.title_label=Label(master, text='Users', font=('Lato',20), fg='#fff', background='#2d3339')
         self.title_label.place(x=50,y=50)
         self.uid_label=Label(master, text='User ID', font=('Lato',15), fg='#fff', background='#2d3339')
-        self.uid_label.place(x=50,y=100)
+        self.uid_label.place(x=25,y=100)
         self.uname_label=Label(master, text='Username', font=('Lato',15), fg='#fff', background='#2d3339')
-        self.uname_label.place(x=150,y=100)
+        self.uname_label.place(x=125,y=100)
         self.email_label=Label(master, text='Email', font=('Lato',15), fg='#fff', background='#2d3339')
-        self.email_label.place(x=250,y=100)
+        self.email_label.place(x=225,y=100)
+        self.class_label=Label(master, text='Class', font=('Lato',15), fg='#fff', background='#2d3339')
+        self.class_label.place(x=425,y=100)
 
 
-        self.umanage = Button(master, text='User Management', font=('Lato', 18), borderwidth=0,commmand=self.user_manage,background='#c92d22', fg='#fff', height=1, width=20)
-        self.umanage.place(x= 170, y = 180)
+        '''self.umanage = Button(master, text='User Management', font=('Lato', 18), borderwidth=0,commmand=self.user_manage,background='#c92d22', fg='#fff', height=1, width=20)
+        self.umanage.place(x= 170, y = 180)'''
+
+        self.userid_dict = {}
+        self.username_dict = {}
+        self.email_dict = {}
+        self.uclass_dict = {}
+        self.but_dict = {}
+        self.count = 0
+        uinfo = db.access_user()
+        self.printdata(uinfo)
     def centerWindow(self):
         w = self.parent.winfo_screenwidth()
         h = self.parent.winfo_screenheight()
@@ -610,6 +670,33 @@ class UserManage(Frame):
 
         self.parent.geometry("%dx%d+%d+%d" %(600,500,x,y))
         self.parent.resizable(0,0)
+
+    def printdata(self,uinfo):
+        master = self.parent
+        size = uinfo[1] #Number of users
+        info = uinfo[0] #Actual User information
+
+        for i in range(size):
+            self.userid_dict[i] = Label(master,text = info[i][0],font = ('Calibri Light',10), fg='#fff',background='#2d3339')
+            self.username_dict[i]= Label(master,text = info[i][1],font = ('Calibri Light',10), fg='#fff',background='#2d3339')
+            self.email_dict[i] = Label(master,text = info[i][3],font = ('Calibri Light',10), fg='#fff',background='#2d3339')
+            self.uclass_dict[i] = Label(master,text = info[i][4],font = ('Calibri Light',10), fg='#fff',background='#2d3339')
+            self.but_dict[i] =Button(master, text='Modify', font=('Lato', 10), borderwidth=0,background='#c92d22', fg='#fff', height=1, width=10)
+
+            self.userid_dict[i].place(x=25,y = 50*(i+3))
+            self.username_dict[i].place(x=125,y = 50*(i+3))
+            self.email_dict[i].place(x=225,y = 50*(i+3))
+            self.uclass_dict[i].place(x = 425,y = 50*(i+3))
+            self.but_dict[i].place(x = 475,y = 50*(i+3))
+
+        blob = Tk()
+        obj = Master(blob)
+        blob.mainloop()
+        blob.destroy()
+
+
+
+
 
 class business_reports(Frame):
     def __init__(self,master=None):
