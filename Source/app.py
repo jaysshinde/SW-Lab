@@ -393,7 +393,7 @@ class bill_frame(Frame):
         #self.add_item = Button(master, text='Add New Item', font=('Lato', 15), borderwidth=0, command=self.additem, background='#c92d22', fg='#fff', height=1, width=10)
         #self.add_item.place(x= 600, y = 50)
 
-        self.bill_label=Label(master, text='Add Billing/Tax Information', font=('Lato',20), fg='#fff', background='#2d3339')
+        self.bill_label=Label(master, text='Billing/Tax Information', font=('Lato',20), fg='#fff', background='#2d3339')
         self.bill_label.place(x=50,y=50)
         self.done_item = Button(master, text='Done', font=('Lato', 15), borderwidth=0, command=self.done, background='#c92d22', fg='#fff', height=1, width=10)
         self.done_item.place(x= 400, y = 50)
@@ -404,36 +404,67 @@ class bill_frame(Frame):
         self.entry_tid.place(x=300, y=100)
 
         self.count=0
+        self.itemname_dict = {}
+        self.quantity_dict = {}
+        self.price_dict = {}
+        self.tax_dict = {}
     def done(self):
         os.system("say Done")
+        tid = int(self.entry_tid.get())
+        output = db.bill_calc(tid)
 
-    '''def additem(self):
-        master=self.parent
-        self.itemid_label=Label(master, text="Item ID: ",  font=("Lato", 15), fg='#fff', background='#1EBBA6', width=15)
-        self.itemid_label.place(x=50,y=100+125*self.count)
+        if(output == -1):
+            box.showerror('ERROR',"No Records for that Transaction ID")
+        else:
+            size = len(output[1])
+            print output
+            itemname = db.fetchname(output[1])
+            self.printbill(size,output,itemname)
 
-        self.itemname_label=Label(master, text="Item Name: ",  font=("Lato", 15), fg='#fff', background='#16776A', width=15)
-        self.itemname_label.place(x=50,y=125+125*self.count)
 
-        self.entry_id = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 15),background='#16776A',fg='#fff')
-        self.entry_id.place(x=150, y=100+125*self.count)
 
-        self.entry_name = Entry(master,width = 25, borderwidth=0, font=("Calibri Light", 15),background='#1EBBA6',fg='#fff')
-        self.entry_name.place(x=150, y=125+125*self.count)
 
-        self.quan_label=Label(master, text="Quantity: ",  font=("Lato", 15), fg='#fff', background='#1EBBA6', width=15)
-        self.quan_label.place(x=50,y=150+125*self.count)
+    def printbill(self,size,output,namelist):
+        master = self.parent
+        self.namelabel = Label(master, text="Item Name",  font=("Lato", 20), fg='#fff', background='#2d3339')
+        self.quantitylabel = Label(master, text="Quantity",  font=("Lato", 20), fg='#fff', background='#2d3339')
+        self.pricelabel =  Label(master, text="Price",  font=("Lato", 20), fg='#fff', background='#2d3339')
+        self.taxlabel =  Label(master, text="Taxes",  font=("Lato", 20), fg='#fff', background='#2d3339')
 
-        self.price_label=Label(master, text="Price: ",  font=("Lato", 15), fg='#fff', background='#16776A', width=15)
-        self.price_label.place(x=50,y=175+125*self.count)
+        self.namelabel.place(x=50,y=150)
+        self.quantitylabel.place(x=200,y=150)
+        self.pricelabel.place(x=300,y=150)
+        self.taxlabel.place(x=400,y=150)
 
-        self.entry_quan = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 15),background='#16776A',fg='#fff')
-        self.entry_quan.place(x=150, y=150+125*self.count)
 
-        self.entry_price = Entry(master, width = 25, borderwidth=0, font=("Calibri Light", 15),background='#1EBBA6',fg='#fff')
-        self.entry_price.place(x=150, y=175+125*self.count)
+        for i in range(size):
+            self.itemname_dict[i] = Label(master, text = str(namelist[i]), font=('Calibri Light',15),fg='#fff',background='#2d3339')
+            self.quantity_dict[i] = Label(master, text = str(output[1][i][3]),font=('Calibri Light',15),fg='#fff',background='#2d3339')
+            self.price_dict[i] = Label(master, text = str(output[1][i][4]),font=('Calibri Light',15),fg='#fff',background='#2d3339')
+            self.tax_dict[i] = Label(master, text = str(output[1][i][5]),font=('Calibri Light',15),fg='#fff',background='#2d3339')
 
-        self.count+=1'''
+            self.itemname_dict[i].place(x=50,y= 150 + 25*(i+2))
+            self.quantity_dict[i].place(x=200,y= 150 + 25*(i+2))
+            self.price_dict[i].place(x=300,y= 150 + 25*(i+2))
+            self.tax_dict[i].place(x=400,y= 150 + 25*(i+2))
+
+        self.totalprice_label = Label(master,text="Total Price",font=("Lato",20),fg='#fff',background='#2d3339')
+        self.totalprice_label.place(x=350,y=150 + 25*(i+4))
+        self.totalprice  = Label(master, text = str(output[0][0]), font=('Calibri Light',15),fg='#fff',background='#2d3339')
+        self.totalprice.place(x=500,y=150 + 25*(i+4))
+
+        self.totaltax_label = Label(master,text="Total Tax",font=("Lato",20),fg='#fff',background='#2d3339')
+        self.totaltax_label.place(x=350,y= 150 + 25*(i+6))
+        self.totaltax = Label(master, text = str(output[0][1]), font=('Calibri Light',15),fg='#fff',background='#2d3339')
+        self.totaltax.place(x=500,y= 150 + 25*(i+6))
+
+        self.due_label = Label(master,text="Payment Due",font=("Lato",20),fg='#fff',background='#2d3339')
+        self.due_label.place(x=350,y= 150 + 25*(i+8))
+        self.due = Label(master, text = str(output[0][2]), font=('Calibri Light',15),fg='#fff',background='#2d3339')
+        self.due.place(x=500,y= 150 + 25*(i+8))
+
+
+
     def centerWindow(self):
         w = self.parent.winfo_screenwidth()
         h = self.parent.winfo_screenheight()
@@ -571,7 +602,7 @@ class Master(Frame):
         self.btcal = Button(master, text='Bill/Tax Calculation', font=('Lato', 18),borderwidth=0,command=self.bill_calc,background='#c92d22', fg='#fff', height=1, width=20)
         self.btcal.place(x= 170, y = 250)
 
-        self.ran = Button(master, text='Add a New Field', font=('Lato', 18), borderwidth=0,background='#c92d22', fg='#fff', height=1, width=20)
+        self.ran = Button(master, text='Add Inventory items', font=('Lato', 18), borderwidth=0,command=self.a_inventory,background='#c92d22', fg='#fff', height=1, width=20)
         self.ran.place(x= 170, y = 300)
         self.add_trans = Button(master, text='Add Transaction Data', font=('Lato', 18), borderwidth=0,command=self.addtrans, background='#c92d22', fg='#fff', height=1, width=20)
         self.add_trans.place(x= 170, y = 350)
@@ -579,6 +610,12 @@ class Master(Frame):
         self.logout = Button(master, text='Logout', font=('Lato', 18), borderwidth=0, command=self.logout, background='#c92d22', fg='#fff', height=1, width=10)
         self.logout.place(x= 400, y = 450)
 
+    def a_inventory(self):
+    	self.parent.destroy()
+    	invframe=Tk()
+        inf=inventory_frame(invframe)
+        invframe.mainloop()
+        invframe.destroy()
 
     def b_reports(self):
     	self.parent.destroy()
@@ -630,6 +667,112 @@ class Master(Frame):
         umanage.uclass = self.uclass
         um.mainloop()
         um.destroy()
+
+class inventory_frame(Frame):
+    def __init__(self,master=None,name =""):
+        Frame.__init__(self,master)
+        self.name = name
+        self.parent = master
+        self.parent.title("Add Inventory items")
+        self.parent.configure(background="#2d3339")
+        self.centerWindow()
+        self.add_item = Button(master, text='Add New Item', font=('Lato', 15), borderwidth=0, command=self.additem, background='#c92d22', fg='#fff', height=1, width=10)
+        self.add_item.place(x= 600, y = 50)
+
+        self.trans_label=Label(master, text='Add Items', font=('Lato',20), fg='#fff', background='#2d3339')
+        self.trans_label.place(x=50,y=50)
+        self.done_item = Button(master, text='Done', font=('Lato', 15), borderwidth=0, command=self.done, background='#c92d22', fg='#fff', height=1, width=10)
+        self.done_item.place(x= 400, y = 50)
+
+        self.count=0
+        self.entry_id = {}
+        self.entry_name = {}
+        self.entry_quan = {}
+        self.entry_category = {}
+        self.entry_price = {}
+        self.entry_units = {}
+        self.entry_ptax = {}
+        self.entry_gst = {}
+        self.entry_atax = {}
+    def centerWindow(self):
+        w = self.parent.winfo_screenwidth()
+        h = self.parent.winfo_screenheight()
+        x = w/2 - 225
+        y = h/2 - 225
+
+        self.parent.geometry("%dx%d+%d+%d" %(800,600,x,y))
+        self.parent.resizable(0,0)
+    def additem(self):
+        master=self.parent
+        self.itemid_label=Label(master, text="Item ID    \t      Name\t             Category        Price         \tUnits   \tQuantity",  font=("Lato", 15), fg='#fff', background='#2d3339')
+        self.itemid_label.place(x=50,y=200+125*self.count)
+
+
+        self.entry_id[self.count] = Entry(master, width = 10, borderwidth=0, font=("Calibri Light", 15),background='#16776A',fg='#fff')
+        self.entry_id[self.count].place(x=50, y=225+125*self.count)
+
+        self.entry_name[self.count] = Entry(master,width = 10, borderwidth=0, font=("Calibri Light", 15),background='#1EBBA6',fg='#fff')
+        self.entry_name[self.count].place(x=150, y=225+125*self.count)
+
+        self.entry_category[self.count] = Entry(master,width = 10, borderwidth=0, font=("Calibri Light", 15),background='#16776A',fg='#fff')
+        self.entry_category[self.count].place(x=250, y=225+125*self.count)
+
+        self.entry_price[self.count] = Entry(master,width = 10, borderwidth=0, font=("Calibri Light", 15),background='#1EBBA6',fg='#fff')
+        self.entry_price[self.count].place(x=350, y=225+125*self.count)
+
+        self.entry_units[self.count] = Entry(master,width = 10, borderwidth=0, font=("Calibri Light", 15),background='#16776A',fg='#fff')
+        self.entry_units[self.count].place(x=450, y=225+125*self.count)
+
+        self.entry_quan[self.count] = Entry(master, width = 10, borderwidth=0, font=("Calibri Light", 15),background='#1EBBA6',fg='#fff')
+        self.entry_quan[self.count].place(x=550, y=225+125*self.count)
+
+        self.itemid_label=Label(master, text="Product Tax   GST    Additional Taxes",  font=("Lato", 15), fg='#fff', background='#2d3339')
+        self.itemid_label.place(x=50,y=250+125*self.count)
+
+
+        self.entry_ptax[self.count] = Entry(master, width = 10, borderwidth=0, font=("Calibri Light", 15),background='#16776A',fg='#fff')
+        self.entry_ptax[self.count].place(x=50, y=275+125*self.count)
+
+        self.entry_gst[self.count] = Entry(master,width = 10, borderwidth=0, font=("Calibri Light", 15),background='#1EBBA6',fg='#fff')
+        self.entry_gst[self.count].place(x=150, y=275+125*self.count)
+
+        self.entry_atax[self.count] = Entry(master,width = 10, borderwidth=0, font=("Calibri Light", 15),background='#16776A',fg='#fff')
+        self.entry_atax[self.count].place(x=250, y=275+125*self.count)
+        self.count+=1
+
+    def done(self):
+        info_get = []
+        #cat = self.entry_type.get()
+        flag=0
+        for i in range(0,self.count):
+            new = []
+            new.append(self.entry_id[i].get())
+            new.append(self.entry_name[i].get())
+            new.append(self.entry_price[i].get())
+            new.append(self.entry_category[i].get())
+            new.append(self.entry_units[i].get())
+            new.append(self.entry_quan[i].get())
+            new.append(self.entry_ptax[i].get())
+            new.append(self.entry_gst[i].get())
+            new.append(self.entry_atax[i].get())
+            info_get.append(new)
+        for i in range(0,self.count):
+            if (len(info_get[i][0])==0 or len(info_get[i][1])==0 or len(info_get[i][2])==0 or len(info_get[i][3])==0 or len(info_get[i][4])==0 or len(info_get[i][5])==0 or len(info_get[i][6])==0 or len(info_get[i][7])==0 or len(info_get[i][8])==0):
+                flag=1
+                break
+        '''if(flag==0):
+            obj = db.Trans(010,self.count,info_get,self.name,cat)
+            fin = obj.dothis()
+
+            if(fin == 1):
+                box.showinfo('SUCCESS',"Transaction added successfully")
+                self.parent.destroy()
+            elif(fin == 0):
+                box.showerror('ERROR',"Couldn't add transaction")
+            elif(fin == -1):
+                box.showerror('ERROR',"You do not have sufficient quantity for the product")
+        else:
+            box.showinfo('ERROR','Empty value fields')'''
 
 class UserManage(Frame):
     def __init__(self,master=None):
@@ -759,6 +902,7 @@ class stocks_prediction(Frame):
 
 #----DRIVER SECTION OF APP----#
 root = Tk()
+root.state('zoomed')
 #root.iconbitmap(r"Users/ayush/Desktop/virtualenvs/sw-lab/git/SW-Lab/Images/image.png")
 #img = PhotoImage(file='/home/gian/Documents/SW-Lab-master/device-computer-icon.png')
 #root.tk.call('wm', 'iconphoto', root._w, img)
